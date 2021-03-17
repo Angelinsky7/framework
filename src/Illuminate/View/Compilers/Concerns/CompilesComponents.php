@@ -122,6 +122,35 @@ trait CompilesComponents
     }
 
     /**
+     * Compile the scoped slot statements into valid PHP.
+     *
+     * @param  string  $expression
+     * @return string
+     */
+    protected function compileScopedSlot($expression)
+    {
+        $php_expression = preg_replace_callback('/\((?<name>([^,]+)),\s*(?<context>([^)]+))\)/', function($matches) {
+            $name = $matches['name'];
+            $context = $matches['context'];
+
+            $functionUses = implode(',', ['$component', '$__env']);
+
+            return "({$name}, function({$context}) use ({$functionUses}) {";
+        }, $expression);
+        return "<?php \$__env->slot{$php_expression} ?>";
+    }
+
+    /**
+     * Compile the end--scoped-slot statements into valid PHP.
+     *
+     * @return string
+     */
+    protected function compileEndScopedSlot()
+    {
+        return '<?php }); ?>';
+    }
+
+    /**
      * Compile the component-first statements into valid PHP.
      *
      * @param  string  $expression

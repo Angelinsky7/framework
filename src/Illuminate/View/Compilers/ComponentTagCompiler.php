@@ -395,17 +395,21 @@ class ComponentTagCompiler
      */
     public function compileSlots(string $value)
     {
-        $value = preg_replace_callback('/<\s*x[\-\:]slot\s+(:?)name=(?<name>(\"[^\"]+\"|\\\'[^\\\']+\\\'|[^\s>]+))\s*>/', function ($matches) {
+        return preg_replace_callback('/<\s*x[\-\:]slot\s+(:?)name=(?<name>(\"[^\"]+\"|\\\'[^\\\']+\\\'|[^\s>]+))\s*(context=(?<context>(\"[^\"]+\"|\\\'[^\\\']+\\\'|[^\s>]+))\s*)?>(?<content>(\s*.*?)*?)<\/\s*x[\-\:]slot[^>]*>/', function ($matches) {
             $name = $this->stripQuotes($matches['name']);
+            $content = $this->stripQuotes($matches['content']);
 
             if ($matches[1] !== ':') {
                 $name = "'{$name}'";
             }
 
-            return " @slot({$name}) ";
-        }, $value);
+            $context = isset($matches['context']) ? $this->stripQuotes($matches['context']) : null;
+            if ($context != null) {
+                return " @scopedslot({$name}, {$context}) {$content} @endscopedslot";
+            }
 
-        return preg_replace('/<\/\s*x[\-\:]slot[^>]*>/', ' @endslot', $value);
+            return " @slot({$name}) {$content} @endslot";
+        }, $value);
     }
 
     /**
